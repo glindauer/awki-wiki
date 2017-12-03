@@ -70,23 +70,28 @@ BEGIN {
 
 
 # remove six single quotes (Wiki''''''Links)
-{ gsub(/''''''/,""); }
+#{ gsub(/''''''/,""); }
 
-# emphasize text in single-quotes 
-/'''/ { gsub(/'''('?'?[^'])*'''/, "<b>&</b>"); gsub(/'''/,""); wikiprint(); }
-/''/  { gsub(/''('?[^'])*''/, "<i>&</i>"); gsub(/''/,""); wikiprint(); }
+# 12/3/17 rework so most markup is prefixed with 
+#	1) a comma; or
+#	2) a semicolon (if linked to the table of contents for the page)
+
+# BOLD is ,. or ;.
+/[,;]\./ { gsub(/[,;]\.(.*)[,;]\./, "<b>&</b>"); gsub(/[,;]\./,""); wikiprint(); }
+# italic is ,/ or ;/
+/[,;]\//  { gsub(/[,;]\/(.*)[,;]\//, "<i>&</i>"); gsub(/[,;]\//,""); wikiprint(); }
+# underline is ,_ or ;_
+/[,;]_/  { gsub(/[,;]_(.*)[,;]_/, "<u>&</u>"); gsub(/[,;]_/,""); wikiprint(); }
 
 #lists
-/^~+[*]/ { close_tags("list"); parse_list("ul", "ol"); wikiprint(); next;}
-/^~+[#1]/ { close_tags("list"); parse_list("ol", "ul"); wikiprint(); next;}
-/^\t+[*]/ { close_tags("list"); parse_list("ul", "ol"); wikiprint(); next;}
-/^\t+[#1]/ { close_tags("list"); parse_list("ol", "ul"); wikiprint(); next;}
+/^[,;]+\*/ { close_tags("list"); parse_list("ul", "ol"); wikiprint(); next;}
+/^[,;]+\#/ { close_tags("list"); parse_list("ol", "ul"); wikiprint(); next;}
 
 #headings
-/^-[1-6]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel ">" substr($0, 3) "</h" headerLevel ">"; close_tags(); wikiprint($0); next; }
+/^[,;][1-6]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel ">" substr($0, 3) "</h" headerLevel ">"; close_tags(); wikiprint($0); next; }
 
 # horizontal line
-/^----/ { sub(/^----+/, "<hr>"); blankline = 1; close_tags(); wikiprint($0); next; }
+/^[,;]-/ { sub(/^[,;]-+/, "<hr>"); blankline = 1; close_tags(); wikiprint($0); next; }
 
 /^ / { 
 	close_tags("pre");
@@ -95,7 +100,7 @@ BEGIN {
 		blankline = 0
 	} else { 
 		if (blankline==1) {
-			wikiprint(); blankline = 0
+			wikiprint("<br/>\n"); blankline = 0
 		}
 		wikiprint($0);
 	}
@@ -119,7 +124,8 @@ NR == 1 { wikiprint( "<p>"); }
 END {
 	$0 = ""
 	close_tags();
-	wikiprint();
+#	wikiprint();
+	print wikibody "\n"
 }
 
 function close_tags(not) {
@@ -157,9 +163,9 @@ function parse_list(this, other) {
 	otherlist = list[other]
 	tabcount = 0
 
-	# while a tab prefixes our list marker, remove the tab and add to count 
-	while(/^\t+[#1*]/) {
-		sub(/^\t/,"")
+	# As long as a markup prefix is present, remove it and increase tab (nesting) count
+	while(/^[,;]+[#*]/) {
+		sub(/^[,;]/,"")
 		tabcount++
 	}
 	# If a tilda (abbreviation for tab) prefixes, remove ~ and add to count
@@ -189,7 +195,7 @@ function parse_list(this, other) {
 
 	# output HTML tag for list
 	if (tabcount) {
-		sub(/^[#1*]/,"")
+		sub(/^[#*]/,"")
 		$0 = "\t<li>" $0
 		wikiprint($0)
 	}
@@ -199,7 +205,6 @@ function parse_list(this, other) {
 }
 function wikiprint(s)
 {
-	print s > "/dev/stderr"
-	print s;
-#	wikibody=(wikibody s "\n")
+	# print s > "/dev/stderr"
+	wikibody=(wikibody s "\n")
 }

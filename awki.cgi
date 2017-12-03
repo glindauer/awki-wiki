@@ -149,6 +149,8 @@ BEGIN {
 
 function html_page() {
 
+	#print  "*** query[page] is " query["page"] > "/dev/stderr"
+
 	# send the header to the webclient for display
 	header(query["page"])
 
@@ -173,8 +175,8 @@ function html_page() {
 }
 
 	footer(query["page"])
-	print "Here's the page:" > "/dev/stderr"
-	print wikipage > "/dev/stderr"
+	# print "Here's the page:" > "/dev/stderr"
+	# print wikipage > "/dev/stderr"
 	print wikipage
 }
 
@@ -239,12 +241,12 @@ function footer(page) {
 	wikiprint( "<hr>")
 	if (page_editable)
 		wikiprint( "<a href=\""scriptname"?edit=true&amp;page="page"\">Edit "page"</a>")
-	wikiprint( "<a href=\""scriptname"/"localconf["default_page"]"\">"localconf["default_page"]"</a>")
+	wikiprint( "<a href=\""scriptname"/"localconf["default_page"]"\">Top ("localconf["default_page"]")</a>")
 	wikiprint( "<a href=\""scriptname"/PageList\">PageList</a>")
-	wikiprint( "<a href=\""scriptname"/RecentChanges\">RecentChanges</a>")
-	wikiprint( "<a href=\""scriptname"/ChangesRSS\">ChangesRSS</a>")
-	if (localconf["rcs"] && !special_page)
-		wikiprint( "<a href=\""scriptname"/"page"?history=true\">PageHistory</a>")
+	#wikiprint( "<a href=\""scriptname"/RecentChanges\">RecentChanges</a>")
+	#wikiprint( "<a href=\""scriptname"/ChangesRSS\">ChangesRSS</a>")
+	#if (localconf["rcs"] && !special_page)
+#		wikiprint( "<a href=\""scriptname"/"page"?history=true\">PageHistory</a>")
 	wikiprint( "<form action=\""scriptname"/FullSearch\" method=\"GET\" align=\"right\">")
 	wikiprint( "<input type=\"text\" name=\"string\">")
 	wikiprint( "<input type=\"submit\" value=\"search\">")
@@ -260,8 +262,10 @@ function parse(name, filename, revision) {
 		if (revision) {
 			wikiprint( "<em>Displaying old version ("revision") of <a href=\""scriptname"/" name "\">"name"</a>.</em>")
 
-
-			system("co -q -p'"revision"' " filename " | "localconf["parser"] " -v datadir='"localconf["datadir"] "'")
+			cmd="co -q -p'"revision"' " filename " | "localconf["parser"] " -v datadir='"localconf["datadir"] "'"
+			while (( cmd | getline sParsed) > 0)
+				wikipage=(wikipage sParsed)	
+			close(cmd)
 		} else
 		{
 			# system(localconf["parser"] " -v datadir='"localconf["datadir"] "' " filename)
@@ -332,10 +336,10 @@ function save(page, text, comment, filename,   dtext, date) {
 	dtext = decode(text);
 	if ( localconf["always_convert_spaces"] || query["convertspaces"] == "on")
 		gsub(/        /, "\t", dtext);
-	print "Executing dtest > filename" > "/dev/stderr"
-	print "filename is " filename " and " >"/dev/stderr"
-	print "dtext is" > "/dev/stderr"
-	print dtext >"/dev/stderr"
+	# print "Executing dtest > filename" > "/dev/stderr"
+	# print "filename is " filename " and " >"/dev/stderr"
+	# print "dtext is" > "/dev/stderr"
+	# print dtext >"/dev/stderr"
 
 	# this is what actually saves the page
 	print dtext > filename
@@ -347,9 +351,13 @@ function save(page, text, comment, filename,   dtext, date) {
 	wikiprint( "Saved <a href=\""scriptname"/"page"\">"page"</a>")
 }
 
-# list all pages
+# PageList link was clicked: list all pages using special_parser.awk
 function special_index(datadir) {
-	system("ls -1 " datadir " | " localconf["special_parser"] " -v special_index=yes")
+	lc=localconf["special_parser"]
+ 	cmd="ls -1 " datadir " | " localconf["special_parser"] " -v special_index=yes"
+	while (( cmd | getline sParsed) > 0)
+		wikipage=(wikipage sParsed)	
+	close(cmd)
 
 }
 
@@ -361,7 +369,10 @@ function special_changes(datadir,   date) {
 }
 
 function special_search(name,datadir) {
-	system("grep -il '"name"' "datadir"* | " localconf["special_parser"] " -v special_search=yes")
+	cmd="grep -il '"name"' "datadir"* | " localconf["special_parser"] " -v special_search=yes"
+	while (( cmd | getline sParsed) > 0)
+		wikipage=(wikipage sParsed)	
+	close(cmd)
 }
 
 function special_history(name, filename) {

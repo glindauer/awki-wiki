@@ -1,0 +1,28 @@
+;2 Markup prefix
+All wiki markup begins with either a comma "," or a semicolon ";". These are good choices because in normal grammar, neither normally has whitespace in front of it, or starts a new line, nor do either normally have anything except whitespace behind it.
+,# comma prefix is the standard.
+,#semicolon prefix "adds something extra" to the comma-- in this case, a link which shows in the table of contents.
+
+,-
+;2Basic Formatting
+ ,.Bold,.
+
+ ,/Italic,/
+
+ ,_Underline,_
+
+,-
+;2Advanced Formatting
+ ,-Horizontal rule
+
+ ,  (if on a line by itself, a paragraph)
+
+ ;1 ;2 ;3 ... ;6 Header types 1 through 6-- use commas (as usual) if links in the table of contents are not wanted.
+
+ Preformatted text: ,<space> then preformatted text follows the space.
+
+ ,* unordered list (prefix additional commas or semicolons for nesting)
+
+ ,# ordered list (prefix additional commas or semicolons for nesting)
+
+ Links: CamelCase or url (http, https, ftp, gopher, mailto, news)

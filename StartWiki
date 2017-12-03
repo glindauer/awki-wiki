@@ -1,0 +1,4 @@
+cd /Users/greg/doc/wiki/cgi-bin
+echo Access wiki at URL "http://localhost:8080/cgi-bin/awki.cgi"
+python -m CGIHTTPServer 8080
+

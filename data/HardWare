@@ -1,0 +1,10 @@
+;1Low level hard drive testing
+;2Command ''badblocks'' is on ClonezillaLive CD with other low level disk commands.
+
+To do a low level disk test, use
+ fdisk -l 
+to make absolutely sure you know the name of the correct disk or partition you want to test, then use ,/badblocks,/:
+ badblocks -nvs /dev/sd? > bb.txt 2>&1 &
+where -n performs a non-destructive write, -v is verbose, and -s tracks status as it works since each phase takes more than an hour for each 100GB. (If you don't care about the data on the disk, replacing -n with -w may be faster but does a destructive write test.) To monitor progress, use
+ tail -f bb_out.txt
+The purpose of the redirection and ,/tail -f,/ is to allow you to break from monitoring (if in single user mode from ClonezillaLive) to do something else. It also ensures you don't accidentally ctrl-c the badblocks program-- you have to intentionally kill its background processing.
