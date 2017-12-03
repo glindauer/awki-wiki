@@ -1,24 +1,30 @@
 ;1 Version Control with git
 ;2 Initial setup
-;# At the project's root directory, set up git for the first (and only) time with 
+,# At the project's root directory, set up git for the first (and only) time with 
  ;=git init
-;# Then add in all the files you want under revisioning control with the add method
- ;=git add file1 file2 filewildcard.*
-;# Finally, commit your changes
- ;=git commit -m "Type in a present tense explanation of the changes"
+,# Then add in all the files you want under revisioning control with the add method
+ ,=git add file1 file2 filewildcard.*
+,# Finally, commit your changes
+ ,=git commit -m "Type in a present tense explanation of the changes"
 
 ;2 What to do to log any changes
 After making changes, use one of these
-;* To add the latest version of just one file, use
+,* To add the latest version of just one file, use
  git add filename
-;* or, to add all the files, from the project root directory use
+,* or, to add all the files, from the project root directory use
  git add .
-;* or, if you aren't in the root directory I think this works (need to check)
+,* or, if you aren't in the root directory I think this works (need to check)
  git add --all
 
 You still have to commit with
  git commit -m "Use a good description!"
 
 ;2 How to see past changes
-To view the changes (and the places you can return to) at any time, use
+,* To briefly view the changes (and the places you can return to) at any time, use
  git log
+,* To see what files changed with the commits, use
+ git log --stat
+,* To see the actual changes in the files, use
+ git log -p
+,* For a really brief look:
+ git log --pretty

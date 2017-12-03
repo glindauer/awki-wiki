@@ -68,9 +68,9 @@ BEGIN {
 	# wikiprint($0)
 }
 
-
-# remove six single quotes (Wiki''''''Links)
-#{ gsub(/''''''/,""); }
+# 12/3/17 Update table of contents: Assume a semicolon preceded by whitespace
+#	means we have a link to add to the TOC
+/[ \t];|^;/ { print "TOC link found: " $0 > "/dev/stderr"; }
 
 # 12/3/17 rework so most markup is prefixed with 
 #	1) a comma; or
@@ -170,6 +170,9 @@ function close_tags(dont_close) {
 			} 
 		}
 	}
+}
+function update_toc() {
+	#  updates table of contents when a ';' prefix is used.
 }
 function parse_list(this, other) {
 	#    The wikimarkup for a list is
