@@ -1,0 +1,24 @@
+To get this to work you have to 
+1) have a link here, called cgi-bin, to this cgi-bin directory itself.
+	$ ln -s . cgi-bin
+2) invoke the web server here, in this cgi-bin directory, since awki.cgi expects cgi-bin to be the root path
+	$ python -m CGIHTTPServer 8080
+3) use web client to access http://localhost:8080/cgi-bin/awki.cgi
+	(if web server is started from parent directory root path
+	is not what awki.cgi wants-- it wants root to be cgi-bin.
+	Conversely, some clients (safari) won't run a cgi from the
+	URL bar unless it is preceeded by cgi-bin/.)
+
+NEVER MIND:
+Created index.html file which automatically invokes awki.cgi. When python is run from the same directory as the index.html, accessing URL
+	http://localhost:8080
+ from the web client will pull in that index.html file, which then invokes awki.cgi automatically.
+
+Contents of index.html file:
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+<META http-equiv=Refresh Content="0; Url=cgi-bin/awki.cgi">
+</HEAD>
+</HTML>
