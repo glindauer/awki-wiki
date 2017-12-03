@@ -1,9 +1,11 @@
 To get this to work you have to 
-1) have a link here, called cgi-bin, to this cgi-bin directory itself.
+
+1) Install all files into a subdirectory called "cgi-bin".
+2) have a symbolic link in the "cgi-bin" subdirectory which itself is called cgi-bin, linking back to this cgi-bin directory itself.
 	$ ln -s . cgi-bin
-2) invoke the web server here, in this cgi-bin directory, since awki.cgi expects cgi-bin to be the root path
+3) invoke the web server here, in this cgi-bin directory, since awki.cgi expects cgi-bin to be the root path
 	$ python -m CGIHTTPServer 8080
-3) use web client to access http://localhost:8080/cgi-bin/awki.cgi
+4) use web client to access http://localhost:8080/cgi-bin/awki.cgi
 	(if web server is started from parent directory root path
 	is not what awki.cgi wants-- it wants root to be cgi-bin.
 	Conversely, some clients (safari) won't run a cgi from the
