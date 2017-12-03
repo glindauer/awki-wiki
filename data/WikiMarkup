@@ -11,15 +11,19 @@ All wiki markup begins with either a comma "," or a semicolon ";". These are goo
 
  ,_Underline,_
 
+,= inserts a tab
+
+,== inserts two tabs
+
 ,-
 ;2Advanced Formatting
  ,-Horizontal rule
 
- ,  (if on a line by itself, a paragraph)
+  (this is an empty line-- it puts in a line break!)
 
  ;1 ;2 ;3 ... ;6 Header types 1 through 6-- use commas (as usual) if links in the table of contents are not wanted.
 
- Preformatted text: ,<space> then preformatted text follows the space.
+ ,<space> allows preformatted text, which follows the space.
 
  ,* unordered list (prefix additional commas or semicolons for nesting)
 

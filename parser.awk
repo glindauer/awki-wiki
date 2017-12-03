@@ -83,6 +83,22 @@ BEGIN {
 # underline is ,_ or ;_
 /[,;]_/  { gsub(/[,;]_(.*)[,;]_/, "<u>&</u>"); gsub(/[,;]_/,""); wikiprint(); }
 
+# tabs are ,= or ;=
+/[,;]=/  { while (/[,;]=/) { 
+			# remove the '=' one at a time,
+			# replacing each with two emphatic spaces
+			# to mimic each tab.
+			#
+			# this ;,;; business allows us to remove
+			# the remainder of the prefix when we are
+			# done without removing any commas or
+			# semicolons which belong on the line.
+			sub(/[,;]=/,"\\&emsp;\\&emsp;;,;;"); }
+		# remove the tag identifying where the prefix had been
+		gsub(/;,;+/,""); 
+	wikiprint(); 
+}
+
 #lists
 /^[,;]+\*/ { close_tags("list"); parse_list("ul", "ol"); wikiprint(); next;}
 /^[,;]+\#/ { close_tags("list"); parse_list("ol", "ul"); wikiprint(); next;}
@@ -128,21 +144,30 @@ END {
 	print wikibody "\n"
 }
 
-function close_tags(not) {
-
-	# if list is parsed this line print it
-	if (not !~ "list") {
-		if (list["ol"] > 0) {
-			parse_list("ol", "ul")
-		} else if (list["ul"] > 0) {
-			parse_list("ul", "ol")
-		} 
-	}
+function close_tags(dont_close) {
 	# close monospace
-	if (not !~ "pre") {
+	if (dont_close !~ "pre") {
+		# if not isn't "pre" we get here--
+		# so we get here for close_tags("list") or
+		# a plain close_tags()
 		if (pre == 1) {
 			wikiprint("</pre>")
 			pre = 0
+		}
+		# We don't close lists because we started
+		# a "pre" block-- so the "not list"
+		# test goes here.
+		#
+		# if list is parsed this line print it
+		if (dont_close !~ "list") {
+			# if not isn't "list" we get here--
+			# so we get here for close_tags("pre") or
+			# a plain close_tags()
+			if (list["ol"] > 0) {
+				parse_list("ol", "ul")
+			} else if (list["ul"] > 0) {
+				parse_list("ul", "ol")
+			} 
 		}
 	}
 }
@@ -166,11 +191,6 @@ function parse_list(this, other) {
 	# As long as a markup prefix is present, remove it and increase tab (nesting) count
 	while(/^[,;]+[#*]/) {
 		sub(/^[,;]/,"")
-		tabcount++
-	}
-	# If a tilda (abbreviation for tab) prefixes, remove ~ and add to count
-	while(/^~+[#1*]/) {
-		sub(/~/,"")
 		tabcount++
 	}
 	
@@ -205,6 +225,6 @@ function parse_list(this, other) {
 }
 function wikiprint(s)
 {
-	# print s > "/dev/stderr"
-	wikibody=(wikibody s "\n")
+	# TO DEBUG:	print s > "/dev/stderr"
+	wikibody=(wikibody s )
 }
