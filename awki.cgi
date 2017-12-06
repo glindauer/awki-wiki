@@ -27,6 +27,8 @@ BEGIN {
 	localconf["img_tag"] = "<img src=\"/awki.png\" width=\"48\" height=\"39\" align=\"left\">"
 	#	datadir: Directory for raw pagedata (must be writeable for the script).
 	localconf["datadir"] = "./data/"
+	#	imagedir: Directory for images (unlike datadir, must be absolute
+	localconf["imagedir"]= "/images/"
 	#	parser: Parsing script.
 	localconf["parser"] = "./parser.awk"
 	#   special_parser: Parser for special_* functions.
@@ -271,7 +273,7 @@ function parse(name, filename, revision) {
 			# system(localconf["parser"] " -v datadir='"localconf["datadir"] "' " filename)
 
 			# localconf["parser"] is name of .awk file that parses our wiki markup and generates HTML tags
-			cmd=(localconf["parser"] " -v datadir='"localconf["datadir"] "' " filename)
+			cmd=(localconf["parser"] " -v datadir='"localconf["datadir"] "' -v imagedir='"localconf["imagedir"] "' " filename)
 			while (( cmd | getline sParsed) > 0)
 				wikipage=(wikipage sParsed)	
 			close(cmd)

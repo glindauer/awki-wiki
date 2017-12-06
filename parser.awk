@@ -32,8 +32,17 @@ BEGIN {
 # register blanklines
 /^$/ { blankline = 1; next; } # wikiprint($0) }
 
-# HTML entities for <, > and &
-/[&<>]/ { gsub(/&/, "\\&amp;");	gsub(/</, "\\&lt;"); gsub(/>/, "\\&gt;"); wikiprint(); }
+##########################################################
+# Convert HTML entities for <, > and & to their & codes, so the
+# 	web browser converts them literally instead of trying to 
+#	decode them as HTML sequences.
+/[^,;][&<>]/ { gsub(/&/, "\\&amp;");	gsub(/</, "\\&lt;"); gsub(/>/, "\\&gt;"); wikiprint(); }
+# If escaped, we WANT the browser to decode them as HTML sequences--
+#  so do that-- for instance, to include an image, you can use
+#      ,<img src="path/imagefile.jpg",>
+# ,&iexcl; and the like behave oddly since the wiki editor translates them
+/[,;][&<>]/ { gsub(/[,;]&/, ",,&");	gsub(/[,;]</, ",,<"); gsub(/[,;]>/, ",,>"); gsub(/,,/,""); wikiprint(); }
+##########################################################
 
 # generate links
 /[A-Z][a-z]+[A-Z][A-Za-z]*/ ||
@@ -83,34 +92,70 @@ BEGIN {
 # underline is ,_ or ;_
 /[,;]_/  { gsub(/[,;]_(.*)[,;]_/, "<u>&</u>"); gsub(/[,;]_/,""); wikiprint(); }
 
-# tabs are ,= or ;=
-/[,;]=/  { while (/[,;]=/) { 
-			# remove the '=' one at a time,
-			# replacing each with two emphatic spaces
-			# to mimic each tab.
-			#
-			# this ;,;; business allows us to remove
-			# the remainder of the prefix when we are
-			# done without removing any commas or
-			# semicolons which belong on the line.
-			sub(/[,;]=/,"\\&emsp;\\&emsp;;,;;"); }
-		# remove the tag identifying where the prefix had been
-		gsub(/;,;+/,""); 
-	wikiprint(); 
+function num_in_tag(sTag) {
+	nPos=match($0,sTag)
+	sNum=substr($0,nPos+1)
+	nNum=sNum+0
+	print "nPos=" nPos " sNum=" sNum " nNum=" nNum > "/dev/stderr"
+	return sNum + 0
+}
+
+function dprint() { print $0 > "/dev/stderr" ; }
+
+# images are ,@ or ;@, with optional size (in width%) before the @
+#	Example: ,50@path/image.png,@
+/[,;][0-9]*@/ {	
+	while (/[,;][0-9]*@/) {
+		# as long as we keep finding the ,@ tag, keep going
+		nPercent = num_in_tag("[,;][0-9]*@") 
+		# default nPercent (if no number) is 100%
+		if (nPercent == 0)
+			nPercent = 100
+		# sub our tag with <div> of correct max width,
+		#	and image using 100% of div inside.
+		sub(/[,;][0-9]*@(.*)[,;]@/,"<div style=\"max-width:" nPercent "%;\"><img src=\"" imagedir "&\" style=\"width: 100%;\"></div>");
+		# We need to remove three tags-- the original
+		#	start and end of image, and the
+		#	one inserted with the filename when
+		#	we used the &
+		for (i=0; i<3; i++)
+			sub(/[,;][0-9]*@/,"");
+		dprint();
+	}
+	wikiprint();
+}
+
+
+# indents are ,= or ;= positive or negative fractional # can precede=
+#	Example: ,2= is a double indent
+/[,;][-.0-9]*=/ {	
+	print $0 > "/dev/stderr"
+	# determine nIndent amount (can be negative, fractional)
+	nIndent = num_in_tag("[,;][-.0-9]*=") 
+	# default indent (if no number) is 1 
+	if (nIndent == 0)
+		nIndent = 1
+	# sub our tag with <div> of correct margin
+	sub(/[,;][-.0-9]*=/,"<div style=\"margin-left:" nIndent "em;\">");
+	# close the div at the end of the record.
+	sub(/$/,"</div>")
+	wikiprint()
+	# don't close out a list
+	no_close_tags=1
 }
 
 #lists
-/^[,;]+\*/ { close_tags("list"); parse_list("ul", "ol"); wikiprint(); next;}
-/^[,;]+\#/ { close_tags("list"); parse_list("ol", "ul"); wikiprint(); next;}
+/^[,;]+\*/ { close_tags("list","*"); parse_list("ul", "ol"); wikiprint(); next;}
+/^[,;]+\#/ { close_tags("list","#"); parse_list("ol", "ul"); wikiprint(); next;}
 
 #headings
-/^[,;][1-6]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel ">" substr($0, 3) "</h" headerLevel ">"; close_tags(); wikiprint($0); next; }
+/^[,;][1-6]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel ">" substr($0, 3) "</h" headerLevel ">"; close_tags("","h"); wikiprint($0); next; }
 
 # horizontal line
-/^[,;]-/ { sub(/^[,;]-+/, "<hr>"); blankline = 1; close_tags(); wikiprint($0); next; }
+/^[,;]-/ { sub(/^[,;]-+/, "<hr>"); blankline = 1; close_tags("","-"); wikiprint($0); next; }
 
 /^ / { 
-	close_tags("pre");
+	close_tags("pre","pre");
 	if (pre != 1) {
 		wikiprint( "<pre>\n" $0); pre = 1
 		blankline = 0
@@ -124,8 +169,12 @@ BEGIN {
 }
 
 NR == 1 { wikiprint( "<p>"); }
+
 {
-	close_tags();
+	if (no_close_tags == 1)
+		no_close_tags = 0;
+	else
+		close_tags("","?");
 	
 	# print paragraph when blankline registered
 	if (blankline==1) {
@@ -139,12 +188,13 @@ NR == 1 { wikiprint( "<p>"); }
 
 END {
 	$0 = ""
-	close_tags();
+	close_tags("","END");
 #	wikiprint();
 	print wikibody "\n"
 }
 
-function close_tags(dont_close) {
+function close_tags(dont_close,caller) {
+	print "close_tags(" dont_close"," caller")" >"/dev/stderr"
 	# close monospace
 	if (dont_close !~ "pre") {
 		# if not isn't "pre" we get here--
