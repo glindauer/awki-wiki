@@ -177,8 +177,8 @@ function html_page() {
 }
 
 	footer(query["page"])
-	# print "Here's the page:" > "/dev/stderr"
-	# print wikipage > "/dev/stderr"
+	 print "Here's the page:" > "/dev/stderr"
+	 print wikipage > "/dev/stderr"
 	print wikipage
 }
 
@@ -275,7 +275,7 @@ function parse(name, filename, revision) {
 			# localconf["parser"] is name of .awk file that parses our wiki markup and generates HTML tags
 			cmd=(localconf["parser"] " -v datadir='"localconf["datadir"] "' -v imagedir='"localconf["imagedir"] "' " filename)
 			while (( cmd | getline sParsed) > 0)
-				wikipage=(wikipage sParsed)	
+				wikipage=(wikipage sParsed "\n" )	
 			close(cmd)
 		}
 		#end of processing if filename exists
@@ -496,7 +496,7 @@ function load_config(script,   configfile,key,value) {
 }
 function wikiprint(s)
 {
-	# print s
+	# DEBUG	print s > "/dev/stderr"
 	wikipage=(wikipage s "\n")
 }
 

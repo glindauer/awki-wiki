@@ -44,6 +44,26 @@ BEGIN {
 /[,;][&<>]/ { gsub(/[,;]&/, ",,&");	gsub(/[,;]</, ",,<"); gsub(/[,;]>/, ",,>"); gsub(/,,/,""); wikiprint(); }
 ##########################################################
 
+# 12/3/17 Update table of contents: Assume a semicolon preceded by whitespace
+#	means we have a link to add to the TOC
+/[ \t];|^;/ { print "TOC link found: " $0 > "/dev/stderr"; }
+/[ \t];|^;/ { 	
+		toc_add=$0 
+		# update bookmark id-- we will put a link to it
+		# in the toc, and insert it in the current link as well
+		id_num++;
+		# set gNeedsIdTag and id_string so later
+		# 	processing of tag adds the ID.
+		gNeedIdTag=1
+		id_string=" id=\"toc" id_num "\""
+
+		# strip off the wiki tag
+		gsub(/;[0-9_.\/=@*#-]*/,"",toc_add);
+		toc_add="<li class=\"tight\"><a href=\"#toc" id_num "\" class=\"tight\">" toc_add "</a></li>"
+		dprint(toc_add)
+		toc=toc toc_add "\n"
+}
+
 # generate links
 /[A-Z][a-z]+[A-Z][A-Za-z]*/ ||
 /(https?|ftp|gopher|mailto|news):/ {
@@ -77,30 +97,40 @@ BEGIN {
 	# wikiprint($0)
 }
 
-# 12/3/17 Update table of contents: Assume a semicolon preceded by whitespace
-#	means we have a link to add to the TOC
-/[ \t];|^;/ { print "TOC link found: " $0 > "/dev/stderr"; }
+function add_id() {
+		# does nothing unless a toc-id is needed,
+		#	which we know know at this point because
+		#	gNeedIdTag should be set if toc was updated.
+		if (gNeedIdTag) {
+			gNeedIdTag=0
+			return id_string
+		}
+	}
 
 # 12/3/17 rework so most markup is prefixed with 
 #	1) a comma; or
 #	2) a semicolon (if linked to the table of contents for the page)
 
 # BOLD is ,. or ;.
-/[,;]\./ { gsub(/[,;]\.(.*)[,;]\./, "<b>&</b>"); gsub(/[,;]\./,""); wikiprint(); }
+/[,;]\./ { gsub(/[,;]\.(.*)[,;]\./, "<b" add_id() ">&</b>"); gsub(/[,;]\./,""); wikiprint(); }
 # italic is ,/ or ;/
-/[,;]\//  { gsub(/[,;]\/(.*)[,;]\//, "<i>&</i>"); gsub(/[,;]\//,""); wikiprint(); }
+/[,;]\//  { gsub(/[,;]\/(.*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
 # underline is ,_ or ;_
-/[,;]_/  { gsub(/[,;]_(.*)[,;]_/, "<u>&</u>"); gsub(/[,;]_/,""); wikiprint(); }
+/[,;]_/  { gsub(/[,;]_(.*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
 
 function num_in_tag(sTag) {
 	nPos=match($0,sTag)
 	sNum=substr($0,nPos+1)
 	nNum=sNum+0
-	print "nPos=" nPos " sNum=" sNum " nNum=" nNum > "/dev/stderr"
+	# DEBUG print "nPos=" nPos " sNum=" sNum " nNum=" nNum > "/dev/stderr"
 	return sNum + 0
 }
 
-function dprint() { print $0 > "/dev/stderr" ; }
+function dprint(sDebug) { 
+	if (sDebug == "")
+		print $0 > "/dev/stderr" ;
+	else
+		print sDebug > "/dev/stderr" ; }
 
 # images are ,@ or ;@, with optional size (in width%) before the @
 #	Example: ,50@path/image.png,@
@@ -113,14 +143,14 @@ function dprint() { print $0 > "/dev/stderr" ; }
 			nPercent = 100
 		# sub our tag with <div> of correct max width,
 		#	and image using 100% of div inside.
-		sub(/[,;][0-9]*@(.*)[,;]@/,"<div style=\"max-width:" nPercent "%;\"><img src=\"" imagedir "&\" style=\"width: 100%;\"></div>");
+		sub(/[,;][0-9]*@(.*)[,;]@/,"<div style=\"max-width:" nPercent "%;\"" add_id() "><img src=\"" imagedir "&\" style=\"width: 100%;\"></div>");
 		# We need to remove three tags-- the original
 		#	start and end of image, and the
 		#	one inserted with the filename when
 		#	we used the &
 		for (i=0; i<3; i++)
 			sub(/[,;][0-9]*@/,"");
-		dprint();
+		# DEBUG dprint();
 	}
 	wikiprint();
 }
@@ -129,14 +159,13 @@ function dprint() { print $0 > "/dev/stderr" ; }
 # indents are ,= or ;= positive or negative fractional # can precede=
 #	Example: ,2= is a double indent
 /[,;][-.0-9]*=/ {	
-	print $0 > "/dev/stderr"
 	# determine nIndent amount (can be negative, fractional)
 	nIndent = num_in_tag("[,;][-.0-9]*=") 
 	# default indent (if no number) is 1 
 	if (nIndent == 0)
 		nIndent = 1
 	# sub our tag with <div> of correct margin
-	sub(/[,;][-.0-9]*=/,"<div style=\"margin-left:" nIndent "em;\">");
+	sub(/[,;][-.0-9]*=/,"<div style=\"margin-left:" nIndent "em;\"" add_id() ">");
 	# close the div at the end of the record.
 	sub(/$/,"</div>")
 	wikiprint()
@@ -149,15 +178,15 @@ function dprint() { print $0 > "/dev/stderr" ; }
 /^[,;]+\#/ { close_tags("list","#"); parse_list("ol", "ul"); wikiprint(); next;}
 
 #headings
-/^[,;][1-6]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel ">" substr($0, 3) "</h" headerLevel ">"; close_tags("","h"); wikiprint($0); next; }
+/^[,;][1-6][ ]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel id_string ">" substr($0, 4) "</h" headerLevel ">"; id_string=""; close_tags("","h"); wikiprint($0); next; }
 
 # horizontal line
-/^[,;]-/ { sub(/^[,;]-+/, "<hr>"); blankline = 1; close_tags("","-"); wikiprint($0); next; }
+/^[,;]-/ { sub(/^[,;]-+/, "<hr" add_id() ">"); blankline = 1; close_tags("","-"); wikiprint($0); next; }
 
 /^ / { 
 	close_tags("pre","pre");
 	if (pre != 1) {
-		wikiprint( "<pre>\n" $0); pre = 1
+		wikiprint( "<pre" add_id() ">\n" $0); pre = 1
 		blankline = 0
 	} else { 
 		if (blankline==1) {
@@ -190,11 +219,29 @@ END {
 	$0 = ""
 	close_tags("","END");
 #	wikiprint();
+	tocprint()
+	# DEBUG (duplicates that in wikiprint) print wikibody > "/dev/stderr"
+	# NOTE: This file was invoked from awki.cgi using a "| getline"
+ 	# syntax, meaning that prints from here are NOT directly
+	# sent to the web browser (they go to awki.cgi first).
+	# We need newlines in "wikibody" AND in awki.cgi.
 	print wikibody "\n"
 }
+function tocprint()
+{
+	if (toc != "") {
+		print "<div class=\"toc\">"
+		print "<h3 class=\"tight\" style=\"margin-left: 5em\">Contents</h3>"
+		print "<ul class=\"tight\">"
+		print toc
+		print "</ul class=\"tight\">"
+		print "</div>"
+	}
+}
+
 
 function close_tags(dont_close,caller) {
-	print "close_tags(" dont_close"," caller")" >"/dev/stderr"
+	# DEBUG print "close_tags(" dont_close"," caller")" >"/dev/stderr"
 	# close monospace
 	if (dont_close !~ "pre") {
 		# if not isn't "pre" we get here--
@@ -269,7 +316,7 @@ function parse_list(this, other) {
 	# output HTML tag for list
 	if (tabcount) {
 		sub(/^[#*]/,"")
-		$0 = "\t<li>" $0
+		$0 = "\t<li" add_id() ">" $0
 		wikiprint($0)
 	}
 	
@@ -279,5 +326,5 @@ function parse_list(this, other) {
 function wikiprint(s)
 {
 	# TO DEBUG:	print s > "/dev/stderr"
-	wikibody=(wikibody s )
+	wikibody=(wikibody  s "\n")
 }
