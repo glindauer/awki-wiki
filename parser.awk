@@ -57,12 +57,25 @@ BEGIN {
 		gNeedIdTag=1
 		id_string=" id=\"toc" id_num "\""
 
+		if (/^;[1-6][ ]/) {
+			# a header
+			headerLevel=substr($0,2,1)
+			tocIndent="style=\"margin-left: "(headerLevel-2)/2 "em;\""
+		} else {
+			headerLevel=0;
+			tocIndent="style=\"margin-left: 2em;\""
+		}
 		# strip off the wiki tag
 		gsub(/;[0-9_.\/=@*#-]*/,"",toc_add);
-		toc_add="<li class=\"tight\"><a href=\"#toc" id_num "\" class=\"tight\">" toc_add "</a></li>"
+
+		# create link for this tag
+		toc_add="<li class=\"tight\" " tocIndent "><a href=\"#toc" id_num "\" class=\"tight\">" substr(toc_add,1,25) "</a></li>"
 		dprint(toc_add)
 		toc=toc toc_add "\n"
 }
+
+#headings
+/^[,;][1-6][ ]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel id_string ">" substr($0, 4) "</h" headerLevel ">"; id_string=""; close_tags("","h"); wikiprint($0); next; }
 
 # generate links
 /[A-Z][a-z]+[A-Z][A-Za-z]*/ ||
@@ -176,9 +189,6 @@ function dprint(sDebug) {
 #lists
 /^[,;]+\*/ { close_tags("list","*"); parse_list("ul", "ol"); wikiprint(); next;}
 /^[,;]+\#/ { close_tags("list","#"); parse_list("ol", "ul"); wikiprint(); next;}
-
-#headings
-/^[,;][1-6][ ]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel id_string ">" substr($0, 4) "</h" headerLevel ">"; id_string=""; close_tags("","h"); wikiprint($0); next; }
 
 # horizontal line
 /^[,;]-/ { sub(/^[,;]-+/, "<hr" add_id() ">"); blankline = 1; close_tags("","-"); wikiprint($0); next; }

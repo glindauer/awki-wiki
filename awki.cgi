@@ -323,14 +323,15 @@ function edit(page, filename, revision,   cmd) {
 	if (! localconf["always_convert_spaces"])
 		wikiprint( "<br>Convert runs of 8 spaces to Tab <input type=\"checkbox\" name=\"convertspaces\" checked>")
 	wikiprint( "</form>")
-	wikiprint( "<small><strong>Emphases:</strong> ''<em>italic</em>''; '''<strong>bold</strong>'''; \
-'''''<strong><em>bold italic</em></strong>'''''; ''<em>mixed '''<strong>bold</strong>'''\
-and italic</em>''<br>\
-<strong>Horizontal Rule:</strong> ----<br><strong>Paragraph:</strong> blank line<br>\
-<strong>Headings:</strong> -1, -2, ... -6 where number is header level<br>\
-<strong>Preformatted Text:</strong> *space*Text<br>\
-<strong>Lists:</strong> tab(s) (abbreviate a tab with a tilda '~') and either a '*' for a bulleted list or a '#' (or '1')  for an automatically numbered list<br>\
-<strong>Links:</strong> JoinCapitalizedWords; url (http, https, ftp, gopher, mailto, news)</small>")
+	wikiprint( "<div class=\"FormKey\">\n")
+	wikiprint("<strong>WikiMarkup tags start with commas (,); use semicolon instead of comma to make link in contents.<br>")
+	wikiprint("Fonts:</strong>,/<em>italic</em>,/  ,.<strong>bold</strong>,.  ,_<u>underline</u>,_<br>")
+	wikiprint(" Start a line with a space to for monotype fixed font.<br>");
+	wikiprint("<strong>Format:</strong>,#= to indent; # is optional amount to indent.<br")
+	wikiprint(",- inserts a horizontal rule. A blank line starts a new paragraph.<br>")
+	wikiprint("<strong>Heading:</strong> ,#&lt;space&gt; where # is header level from 1 to 6<br>")
+	wikiprint("<strong>Lists:</strong> ,* for bulleted list, ,# for numbered list (this time use literal hash sign)<br>")
+	wikiprint("<strong>Links:</strong> JoinCapitalizedWords; url (http, https, ftp, gopher, mailto, news)")
 }
 
 # save page
@@ -338,7 +339,8 @@ function save(page, text, comment, filename,   dtext, date) {
 	dtext = decode(text);
 	if ( localconf["always_convert_spaces"] || query["convertspaces"] == "on")
 		gsub(/        /, "\t", dtext);
-	# print "Executing dtest > filename" > "/dev/stderr"
+	# UNCOMMENT BELOW TO DEBUG
+	# print "Executing print dtext > filename" > "/dev/stderr"
 	# print "filename is " filename " and " >"/dev/stderr"
 	# print "dtext is" > "/dev/stderr"
 	# print dtext >"/dev/stderr"
