@@ -1,4 +1,5 @@
 cd /Users/greg/doc/wiki/cgi-bin
 echo Access wiki at URL "http://localhost:8080"
+dns-sd -R "wrenWiki server" _http._tcp local 80 &
 python -m CGIHTTPServer 8080
 

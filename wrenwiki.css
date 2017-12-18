@@ -2,10 +2,20 @@ body {
 	color:black;
 	background-color: white;
 	text-align: left;
-}
-li {
-	margin-top: 1em;
+	margin-top: 0.2em;
 	margin-bottom: 0em;
+}
+h1,h2,h3,h4,h5,h6, p {
+	margin-top: 0.5em;
+	margin-bottom: 0em;
+}
+div {
+	margin-top: 0em;
+	margin-bottom: 0em;
+}
+pre div {
+	margin-top: -1.2em;
+	margin-bottom: -1.2em;
 }
 pre {
 	color:dimgray;
@@ -21,17 +31,15 @@ pre {
 	margin: 0.2em;
 	background-color: lightgray;
 	color: black;
-	// keep text from wrapping in toc using overflow and white-space
+	/* keep text from wrapping in toc using overflow and white-space*/
 	overflow: hidden;
-	white-space:nowrap;
+	white-space: nowrap;
 }
 ul.tight {
 	margin-left: -0.5em;
-	//list-style-type: circle;
 }
 .tight {
 	margin-top: 0.1em;
 	margin-bottom: 0em;
-
 }
 

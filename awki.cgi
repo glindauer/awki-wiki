@@ -177,7 +177,7 @@ function html_page() {
 }
 
 	footer(query["page"])
-	 print "Here's the page:" > "/dev/stderr"
+	 print "*************************************************************************\n*** Here's the page: ***\n*************************" > "/dev/stderr"
 	 print wikipage > "/dev/stderr"
 	print wikipage
 }
@@ -326,11 +326,13 @@ function edit(page, filename, revision,   cmd) {
 	wikiprint( "<div class=\"FormKey\">\n")
 	wikiprint("<strong>WikiMarkup tags start with commas (,); use semicolon instead of comma to make link in contents.<br>")
 	wikiprint("Fonts:</strong>,/<em>italic</em>,/  ,.<strong>bold</strong>,.  ,_<u>underline</u>,_<br>")
-	wikiprint(" Start a line with a space to for monotype fixed font.<br>");
+	wikiprint(" Start a line with a space to obtain preformatted lines. You can't use certain other tags (such as lists) in preformatted lines.<br>");
 	wikiprint("<strong>Format:</strong>,#= to indent; # is optional amount to indent.<br")
 	wikiprint(",- inserts a horizontal rule. A blank line starts a new paragraph.<br>")
 	wikiprint("<strong>Heading:</strong> ,#&lt;space&gt; where # is header level from 1 to 6<br>")
 	wikiprint("<strong>Lists:</strong> ,* for bulleted list, ,# for numbered list (this time use literal hash sign)<br>")
+	wikiprint(" Nesting of one list inside another is accomplished by prefixing additional commas<br>");
+	wikiprint(" or semicolons in front of the * or #.</br>")
 	wikiprint("<strong>Links:</strong> JoinCapitalizedWords; url (http, https, ftp, gopher, mailto, news)")
 }
 

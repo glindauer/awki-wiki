@@ -60,7 +60,7 @@ BEGIN {
 		if (/^;[1-6][ ]/) {
 			# a header
 			headerLevel=substr($0,2,1)
-			tocIndent="style=\"margin-left: "(headerLevel-2)/2 "em;\""
+			tocIndent="style=\"margin-left: "(headerLevel-2) "em;\""
 		} else {
 			headerLevel=0;
 			tocIndent="style=\"margin-left: 2em;\""
@@ -123,13 +123,15 @@ function add_id() {
 # 12/3/17 rework so most markup is prefixed with 
 #	1) a comma; or
 #	2) a semicolon (if linked to the table of contents for the page)
+# 12/17/17: made gsub less greedy for bold, italic, and underline by 
+#	using [^,;]* instead of .*
 
 # BOLD is ,. or ;.
-/[,;]\./ { gsub(/[,;]\.(.*)[,;]\./, "<b" add_id() ">&</b>"); gsub(/[,;]\./,""); wikiprint(); }
+/[,;]\./ { gsub(/[,;]\.([^,;]*)[,;]\./, "<b" add_id() ">&</b>"); gsub(/[,;]\./,""); wikiprint(); }
 # italic is ,/ or ;/
-/[,;]\//  { gsub(/[,;]\/(.*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
+/[,;]\//  { gsub(/[,;]\/([^,;]*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
 # underline is ,_ or ;_
-/[,;]_/  { gsub(/[,;]_(.*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
+/[,;]_/  { gsub(/[,;]_([^,;]*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
 
 function num_in_tag(sTag) {
 	nPos=match($0,sTag)
@@ -168,10 +170,10 @@ function dprint(sDebug) {
 	wikiprint();
 }
 
-
 # indents are ,= or ;= positive or negative fractional # can precede=
 #	Example: ,2= is a double indent
 /[,;][-.0-9]*=/ {	
+	dprint("Start Line is " $0)
 	# determine nIndent amount (can be negative, fractional)
 	nIndent = num_in_tag("[,;][-.0-9]*=") 
 	# default indent (if no number) is 1 
@@ -181,14 +183,17 @@ function dprint(sDebug) {
 	sub(/[,;][-.0-9]*=/,"<div style=\"margin-left:" nIndent "em;\"" add_id() ">");
 	# close the div at the end of the record.
 	sub(/$/,"</div>")
-	wikiprint()
+	dprint("End Line is " $0)
 	# don't close out a list
-	no_close_tags=1
+	no_close_list=1
+	# don't add an extra line break at end of a div-- already handled by div
+	no_break=1
 }
 
+
 #lists
-/^[,;]+\*/ { close_tags("list","*"); parse_list("ul", "ol"); wikiprint(); next;}
-/^[,;]+\#/ { close_tags("list","#"); parse_list("ol", "ul"); wikiprint(); next;}
+/[,;]+\*/ { no_close_list=0; close_tags("list","*"); parse_list("ul", "ol"); wikiprint(); next;}
+/[,;]+\#/ { close_tags("list","#"); parse_list("ol", "ul"); wikiprint(); next;}
 
 # horizontal line
 /^[,;]-/ { sub(/^[,;]-+/, "<hr" add_id() ">"); blankline = 1; close_tags("","-"); wikiprint($0); next; }
@@ -196,11 +201,13 @@ function dprint(sDebug) {
 /^ / { 
 	close_tags("pre","pre");
 	if (pre != 1) {
-		wikiprint( "<pre" add_id() ">\n" $0); pre = 1
+		wikiprint( "<pre" add_id() ">" $0); pre = 1
 		blankline = 0
 	} else { 
 		if (blankline==1) {
-			wikiprint("<br/>\n"); blankline = 0
+			# Don't use <br/> since pre takes care of blank lines itself 
+			wikiprint();
+			blankline = 0
 		}
 		wikiprint($0);
 	}
@@ -210,8 +217,10 @@ function dprint(sDebug) {
 NR == 1 { wikiprint( "<p>"); }
 
 {
-	if (no_close_tags == 1)
-		no_close_tags = 0;
+	if (no_close_list == 1) {
+		close_tags("list","?")
+		no_close_list = 0;
+	}
 	else
 		close_tags("","?");
 	
@@ -222,7 +231,12 @@ NR == 1 { wikiprint( "<p>"); }
 	}
 
 	#print line
-	wikiprint($0);
+	if (no_break == 0)
+		wikiprint($0 "<br/>")
+	else {
+		wikiprint($0)
+		no_break=0
+	}
 }
 
 END {
@@ -234,7 +248,8 @@ END {
 	# NOTE: This file was invoked from awki.cgi using a "| getline"
  	# syntax, meaning that prints from here are NOT directly
 	# sent to the web browser (they go to awki.cgi first).
-	# We need newlines in "wikibody" AND in awki.cgi.
+	# To make text pretty for web inspectors, 
+	# we need newlines in "wikibody" AND in awki.cgi.
 	print wikibody "\n"
 }
 function tocprint()
@@ -251,7 +266,8 @@ function tocprint()
 
 
 function close_tags(dont_close,caller) {
-	# DEBUG print "close_tags(" dont_close"," caller")" >"/dev/stderr"
+	# DEBUG 
+		print "close_tags(" dont_close"," caller")" >"/dev/stderr"
 	# close monospace
 	if (dont_close !~ "pre") {
 		# if not isn't "pre" we get here--
@@ -283,11 +299,11 @@ function update_toc() {
 }
 function parse_list(this, other) {
 	#    The wikimarkup for a list is
-	# ~* First bullet item
-        # ~* Next bullet item
+	# ,* First bullet item
+        # ,* Next bullet item
    	#    OR, for a numbered list,
-	# ~1 first numbered item
-        # ~2 second numbered item
+	# ,# first numbered item
+        # ,# second numbered item
         #    and so on.
         # tabs can be used instead of tildas.
         # Lists can be nested in lists by prefixing more tabs or tildas. 
@@ -335,6 +351,7 @@ function parse_list(this, other) {
 }
 function wikiprint(s)
 {
-	# TO DEBUG:	print s > "/dev/stderr"
+	# TO DEBUG:	
+		print s > "/dev/stderr"
 	wikibody=(wikibody  s "\n")
 }
