@@ -1,0 +1,45 @@
+;2 Low level hard drive testing
+;3 Badblocks command
+
+Command ''badblocks'' is on ClonezillaLive CD with other low level disk commands. It is also available through macport.
+
+To do a low level disk test, use
+ fdisk -l 
+to make absolutely sure you know the name of the correct disk or partition you want to test, then use ,/badblocks,/:
+ badblocks -nvs /dev/sd? -o badblocklist.txt > bb.txt 2>&1 &
+where -n performs a non-destructive write, -v is verbose, and -s tracks status as it works since each phase takes more than an hour for each 100GB. (If you don't care about the data on the disk, replacing -n with -w appears much faster but does a destructive write test.) To monitor progress, use
+ tail -f bb_out.txt
+The purpose of the redirection and ,/tail -f,/ is to allow you to break from monitoring (if in single user mode from ClonezillaLive) to do something else. It also ensures you don't accidentally ctrl-c the badblocks program-- you have to intentionally kill its background processing.
+
+;3 Smartctl hard drive info and testing
+Smartctl can read the S.M.A.R.T. controller and is probably a better bet than badblocks-- except it doesn't work on all USB devices.
+
+;3 Procedure to tell hard drive to set blocks as dirty
+(From https://askubuntu.com/questions/403434/removing-a-bad-sector-from-an-ntfs-partition-badblocks-gave-me-an-output-now-w)
+
+4
+down vote
+accepted
+...well now gparted says it's clean!! AT LAST!! ...anyways I'm not sure what exactly solved the problem but I'll list what I've done backwards:
+
+ sudo ntfsfix -b /dev/sda6 which gave out:
+
+Mounting volume... OK
+Processing of $MFT and $MFTMirr completed successfully.
+Checking the alternate boot sector... OK
+NTFS volume version is 3.1.
+Going to un-mark the bad clusters ($BadClus)... OK
+NTFS partition /dev/sda6 was processed successfully.
+but before that I did:
+
+ sudo dd if=/dev/zero of=/dev/sda6 bs=1024 count=1 seek=303975848
+ sudo dd if=/dev/zero of=/dev/sda6 bs=1024 count=1 seek=303975849
+ sudo dd if=/dev/zero of=/dev/sda6 bs=1024 count=1 seek=303975850
+ sudo dd if=/dev/zero of=/dev/sda6 bs=1024 count=1 seek=303975851
+and before that I did
+
+ sudo badblocks -nvs /dev/sda6 ... which took 2 whole days to finish!
+
+anyways, lastly, before the last command, I opened windows 7 and used the chkdsk utility (right click the partition, properties, "tools"(or something like that), check for errors)
+
+I hope this helps anyone.

@@ -1,0 +1,18 @@
+;1 Version Control with git
+
+;1 Header 1
+;2 Header 2
+;3 Header 3
+;4 Header 4
+;5 Header 5
+;6 Header 6
+
+;2 Initial setup
+,# At the project's root directory, set up git for the first (and only) time with 
+ ;-2.5=git init
+,200@st.png,@
+,# Then add in all the files you want under revisioning control with the add method
+ ,-1=git add file1 file2 filewildcard.*
+,# Finally, commit your changes
+ ,20=git commit -m "Type in a present tense explanation of the changes"
+,2 This is a header not shown in toc.

@@ -1,0 +1,6 @@
+iMac and MacBook are set up as DHCP in their respective OS's, but the AT&T UVerse modem, which manages DHCP, is setup to provide them with fixed IP addresses via DHCP.
+
+This is done in the ,/Home Network,//IP Allocation,/ menu.
+,75@att_modem_ip_allocation.jpeg,@
+,*When you click ,_Allocate,_ for an ,/IP Address/Device,/ that shows DHCP Allocation, you can change it to a fixed IP address in the DHCP allocation block. Click ,_Save,_ to change to fixed allocation.
+,*When you select an ,/IP Address/Device,/ that shows ,.Fixed Allocation,., cicking on ,_Allocate,_ immediately converts the ,/IP Address/Device,/ back to DHCP automatic address allocation. 

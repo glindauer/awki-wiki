@@ -1,0 +1,44 @@
+;1 Version Control with git
+TmpTmp
+;2 Initial setup
+,# At the project's root directory, set up git for the first (and only) time with 
+ git init
+,# Then add in all the files you want under revisioning control with the add method
+ git add file1 file2 file.*
+,=or
+ git pull https://github.com/ <REPOSITORY NAME> ,/I think this works-- tried git fetch first, which didn't install files, and only then did the pull, which worked!,/
+,# Finally, commit your changes
+ git commit -m "Type in a present tense explanation of the changes"
+
+;2 What to do to log any changes
+After making changes, use one of these
+,* To add the latest versions of just files you choose, use
+ git add filename [filename2] [filename3...]
+,* To update all committed files with any local modifications, but not add any more files, use
+ git add -u
+,* to add all the files, from the project root directory use
+ git add .
+,* if you want to go crazy and add everything in the directory tree (be careful with this since if you have any private data in any file it will end up in the repository with the next commit), use
+ git add --all
+
+You can use -v for verbose, -n for a dry run but not do anything, and -i for interactive; for example
+ git add -uv
+
+You still have to commit with
+ git commit -m "Use a good description!"
+
+;2 Status of what's changed
+ git status
+will show what's been modified, and what is and is not tracked.
+Use this status to remind yourself what to ,.git add,. and then ,.git commit,..
+
+;2 How to see past changes
+,* To briefly view the changes (and the places you can return to) at any time, use
+ git log
+,* To see what files changed with the commits, use
+ git log --stat
+,* To see the actual changes in the files, use
+ git log -p
+,* For a really brief look:
+ lgit
+(lgit is a local function; "git log --pretty" doesn't work on the mac's version of git log)

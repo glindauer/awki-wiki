@@ -1,0 +1,17 @@
+,# ,.DONE,. WrenWiki currently selects the LARGEST match between Wiki Markup tags-- need to try the shortest. That is text such as ", _underline #1, _ should be separate from , _underline #2, _" is all highlighted as one block, currently.
+
+,# ,.DONE,. Fix issues shown on GdiskAndGPT page. And why doesn't ClonezillaLive show up in the PageList?
+
+,#Show an "edit page" at the top as well as at the bottom.
+
+,#Show "top" at the bottom, and change wording of "Top" WrenWiki to maybe "Home?"
+
+,# Automatically make text inside a list, but not with a list tag, indent.
+
+,# Change bold from using , . to using ,+
+
+,# Create a tag to use a style-- any style-- in css file-- like maybe ,?style-name?
+
+,# Create a way to quote tags, maybe `, _` to quote an underline, for example?,
+
+,# Get rid of "Convert runs of 8 spaces to Tab"... allow another way to insert tabs.

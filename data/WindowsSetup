@@ -1,0 +1,12 @@
+;3 Printing
+BrotherPrinterSetup
+
+;3 Covert from MBR to GPT/EFI boot
+
+See https://www.intel.com/content/www/us/en/support/articles/000024558/memory-and-storage/intel-optane-memory.html
+
+;3 Low-Level Administrator tasks
+
+Rebuild/remove system volume information: https://superuser.com/questions/1070798/remove-system-volume-information-folder-from-external-drive
+
+Add "Take ownership" context menu choices to file explorer: https://www.howtogeek.com/howto/windows-vista/add-take-ownership-to-explorer-right-click-menu-in-vista/
