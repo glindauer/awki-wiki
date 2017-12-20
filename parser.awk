@@ -46,8 +46,9 @@ BEGIN {
 
 # 12/3/17 Update table of contents: Assume a semicolon preceded by whitespace
 #	means we have a link to add to the TOC
-/[ \t];|^;/ { print "TOC link found: " $0 > "/dev/stderr"; }
-/[ \t];|^;/ { 	
+# 12/19/17 Further update: if preceded by whitespace, must not be FOLLOWED by whitespace-- for example, bash functions often have list delimter " ; " standing alone.
+# DEBUG /[ \t];[^ \t]|^;[^ \t]/ { print "TOC link found: " $0 > "/dev/stderr"; }
+/[ \t];[^ \t]|^;[^ \t]/ { 	
 		toc_add=$0 
 		# update bookmark id-- we will put a link to it
 		# in the toc, and insert it in the current link as well
@@ -70,7 +71,7 @@ BEGIN {
 
 		# create link for this tag
 		toc_add="<li class=\"tight\" " tocIndent "><a href=\"#toc" id_num "\" class=\"tight\">" substr(toc_add,1,25) "</a></li>"
-		dprint(toc_add)
+		# DEBUG dprint(toc_add)
 		toc=toc toc_add "\n"
 }
 
@@ -126,12 +127,18 @@ function add_id() {
 # 12/17/17: made gsub less greedy for bold, italic, and underline by 
 #	using [^,;]* instead of .*
 
-# BOLD is ,. or ;.
-/[,;]\./ { gsub(/[,;]\.([^,;]*)[,;]\./, "<b" add_id() ">&</b>"); gsub(/[,;]\./,""); wikiprint(); }
+
+# about the italic regex:
+#	[,;]\/ matches the first and last wikitag, ",/" (or ";/")
+#		[^,']* ignores any commas or semicolons inside the italic body
+#		[^\/]* makes sure the match doesn't stop at the first internal
+#			comma or semicolon-- otherwise match will fail!
 # italic is ,/ or ;/
-/[,;]\//  { gsub(/[,;]\/([^,;]*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
+/[,;]\//  { gsub(/[,;]\/([^,;]*[^\/]*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
+# BOLD is ,. or ;.
+/[,;]\./ { gsub(/[,;]\.([^,;]*[^\/]*)[,;]\./, "<b" add_id() ">&</b>"); gsub(/[,;]\./,""); wikiprint(); }
 # underline is ,_ or ;_
-/[,;]_/  { gsub(/[,;]_([^,;]*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
+/[,;]_/  { gsub(/[,;]_([^,;]*[^\/]*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
 
 function num_in_tag(sTag) {
 	nPos=match($0,sTag)
@@ -173,7 +180,7 @@ function dprint(sDebug) {
 # indents are ,= or ;= positive or negative fractional # can precede=
 #	Example: ,2= is a double indent
 /[,;][-.0-9]*=/ {	
-	dprint("Start Line is " $0)
+	#DEBUG dprint("Start Line is " $0)
 	# determine nIndent amount (can be negative, fractional)
 	nIndent = num_in_tag("[,;][-.0-9]*=") 
 	# default indent (if no number) is 1 
@@ -183,7 +190,7 @@ function dprint(sDebug) {
 	sub(/[,;][-.0-9]*=/,"<div style=\"margin-left:" nIndent "em;\"" add_id() ">");
 	# close the div at the end of the record.
 	sub(/$/,"</div>")
-	dprint("End Line is " $0)
+	#DEBUG dprint("End Line is " $0)
 	# don't close out a list
 	no_close_list=1
 	# don't add an extra line break at end of a div-- already handled by div
@@ -260,14 +267,16 @@ function tocprint()
 		print "<ul class=\"tight\">"
 		print toc
 		print "</ul class=\"tight\">"
+		# links for top and bottom
+		print "<a href=\"#top\">[Top]</a><a href=\"#bottom\" style=\"float: right;\">[Bottom]</a>"
+		#
 		print "</div>"
 	}
 }
 
 
 function close_tags(dont_close,caller) {
-	# DEBUG 
-		print "close_tags(" dont_close"," caller")" >"/dev/stderr"
+	# DEBUG print "close_tags(" dont_close"," caller")" >"/dev/stderr"
 	# close monospace
 	if (dont_close !~ "pre") {
 		# if not isn't "pre" we get here--
@@ -351,7 +360,6 @@ function parse_list(this, other) {
 }
 function wikiprint(s)
 {
-	# TO DEBUG:	
-		print s > "/dev/stderr"
+	# TO DEBUG:	print s > "/dev/stderr"
 	wikibody=(wikibody  s "\n")
 }

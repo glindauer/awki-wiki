@@ -116,6 +116,7 @@ BEGIN {
 	for (i=1; i<=n; i++) {
 		split(querys[i], data, "=")
 		query[data[1]] = data[2]
+		# DEBUG print ("query[" data[1] "]=" data[2] ) >"/dev/stderr"
 	}
 
 	# (IMPORTANT for security!)
@@ -151,7 +152,7 @@ BEGIN {
 
 function html_page() {
 
-	#print  "*** query[page] is " query["page"] > "/dev/stderr"
+	# DEBUG print  "*** query[page] is " query["page"] > "/dev/stderr"
 
 	# send the header to the webclient for display
 	header(query["page"])
@@ -177,8 +178,8 @@ function html_page() {
 }
 
 	footer(query["page"])
-	 print "*************************************************************************\n*** Here's the page: ***\n*************************" > "/dev/stderr"
-	 print wikipage > "/dev/stderr"
+	# DEBUG print "*************************************************************************\n*** Here's the page: ***\n*************************" > "/dev/stderr"
+	# DEBUG	 print wikipage > "/dev/stderr"
 	print wikipage
 }
 
@@ -234,17 +235,22 @@ function header(page) {
 	if (query["save"])
 		wikiprint( "<meta http-equiv=\"refresh\" content=\"2,URL="scriptname"/"page"\">")
 	wikiprint( "</head>\n<body>")
-	wikiprint( "<h1>"localconf["img_tag"])
-	wikiprint( "<a href=\""scriptname"/FullSearch?string="page"\">"page"</a></h1><hr>")
+	wikiprint( "<h1 id=\"top\">"localconf["img_tag"])
+	wikiprint( "<a href=\""scriptname"/FullSearch?string="page"\">"page"</a>")
+	if (page_editable)
+		wikiprint( "<span style=\"float: right; font-size:50%;\"><a href=\""scriptname"?edit=true&amp;page="page"\">[Edit]</a><a href=\"#bottom\">[Bottom]</a></span><hr>")
+#		wikiprint( "<a style=\"float: right; font-size:50%;\" href=\""scriptname"?edit=true&amp;page="page"\">[Edit]</a><hr>")
+	wikiprint("</h1><hr>")
 }
 
 # print footer
 function footer(page) {
-	wikiprint( "<hr>")
+	wikiprint( "<hr id=\"bottom\">")
 	if (page_editable)
-		wikiprint( "<a href=\""scriptname"?edit=true&amp;page="page"\">Edit "page"</a>")
-	wikiprint( "<a href=\""scriptname"/"localconf["default_page"]"\">Top ("localconf["default_page"]")</a>")
-	wikiprint( "<a href=\""scriptname"/PageList\">PageList</a>")
+		wikiprint( "<a href=\""scriptname"?edit=true&amp;page="page"\">[Edit]</a>")
+	wikiprint( "<a href=\"#top\">[Top]</a>")
+	wikiprint( "<a href=\""scriptname"/"localconf["default_page"]"\">[Home]</a>")
+	wikiprint( "<a href=\""scriptname"/PageList\">[PageList]</a>")
 	#wikiprint( "<a href=\""scriptname"/RecentChanges\">RecentChanges</a>")
 	#wikiprint( "<a href=\""scriptname"/ChangesRSS\">ChangesRSS</a>")
 	#if (localconf["rcs"] && !special_page)
@@ -299,11 +305,18 @@ function special_diff(page, filename, revision, revision2,   revisions) {
 	}
 }
 
-# print edit form
+# show the edit form
 function edit(page, filename, revision,   cmd) {
 	if (revision)
 		wikiprint( "<p><small><em>If you save previous versions, you'll overwrite the current page.</em></small>")
-	wikiprint( "<form action=\""scriptname"?save=true&amp;page="page"\" method=\"POST\">")
+	# main form has two elements.
+	# (1) a textarea displays the lines in the file that include the wikitags
+	# which are converted by parser.awk into html tags and displayed
+	# by the client
+	# (2) input submit is the save button.
+	# form is displayed inline so the next form (with input submit/cancel)
+	# is displayed to the right of the save button and not underneath it.
+	wikiprint( "<form action=\""scriptname"?save=true&amp;page="page"\" method=\"POST\" style=\"display: inline;\">")
 	wikiprint( "<textarea name=\"text\" rows=25 cols=80>")
 	# insert current page into textarea
 	if (revision) {
@@ -323,6 +336,8 @@ function edit(page, filename, revision,   cmd) {
 	if (! localconf["always_convert_spaces"])
 		wikiprint( "<br>Convert runs of 8 spaces to Tab <input type=\"checkbox\" name=\"convertspaces\" checked>")
 	wikiprint( "</form>")
+	# Second form ONLY has cancel button, and action is to just request a GET on the current page.
+	wikiprint("<form action=\""scriptname"/&amp;page="page"\" method=\"GET\" style=\"display: inline;\"><input type=\"submit\" value=\"cancel\"></form>")
 	wikiprint( "<div class=\"FormKey\">\n")
 	wikiprint("<strong>WikiMarkup tags start with commas (,); use semicolon instead of comma to make link in contents.<br>")
 	wikiprint("Fonts:</strong>,/<em>italic</em>,/  ,.<strong>bold</strong>,.  ,_<u>underline</u>,_<br>")

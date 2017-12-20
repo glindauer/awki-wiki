@@ -34,6 +34,10 @@ pre {
 	/* keep text from wrapping in toc using overflow and white-space*/
 	overflow: hidden;
 	white-space: nowrap;
+	/* keep toc stuck to page, don't let it scroll off */
+	position: -webkit-sticky; /* Safari browser needs this */
+	position: sticky; /* other browsers need this */
+	top: 0;
 }
 ul.tight {
 	margin-left: -0.5em;
