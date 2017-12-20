@@ -130,15 +130,20 @@ function add_id() {
 
 # about the italic regex:
 #	[,;]\/ matches the first and last wikitag, ",/" (or ";/")
-#		[^,']* ignores any commas or semicolons inside the italic body
-#		[^\/]* makes sure the match doesn't stop at the first internal
-#			comma or semicolon-- otherwise match will fail!
+#		Then, in the body (between wikitags):
+#		1. [^,;][^\/]* will not match a / unless it is NOT
+#			preceded by a , or ;
+#		|       OR:
+#		2. [^,;]*[^\/] will not match a , or ;, unless
+#			followed by a non-slash
+# So, body rule (1) will ensure "let's italicize ,/this,/ but not this
+#	but ,/this again,/ works.
 # italic is ,/ or ;/
-/[,;]\//  { gsub(/[,;]\/([^,;]*[^\/]*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
+/[,;]\//  { gsub(/[,;]\/([^,;][^\/]*|[^,;]*[^\/]*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
 # BOLD is ,. or ;.
-/[,;]\./ { gsub(/[,;]\.([^,;]*[^\/]*)[,;]\./, "<b" add_id() ">&</b>"); gsub(/[,;]\./,""); wikiprint(); }
+/[,;]\./ { gsub(/[,;]\.([^,;][^.]*|[^,;]*[^.]*)[,;]\./, "<b" add_id() ">&</b>"); gsub(/[,;]\./,""); wikiprint(); }
 # underline is ,_ or ;_
-/[,;]_/  { gsub(/[,;]_([^,;]*[^\/]*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
+/[,;]_/  { gsub(/[,;]_([^,;][^_]*|[^,;]*[^_]*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
 
 function num_in_tag(sTag) {
 	nPos=match($0,sTag)
