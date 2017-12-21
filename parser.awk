@@ -75,6 +75,56 @@ BEGIN {
 		toc=toc toc_add "\n"
 }
 
+# 12/3/17 rework so most markup is prefixed with 
+#	1) a comma; or
+#	2) a semicolon (if linked to the table of contents for the page)
+# 12/17/17: made gsub less greedy for bold, italic, and underline by 
+#	using [^,;]* instead of .*
+
+
+# about the italic regex:
+#	[,;]\/ matches the first and last wikitag, ",/" (or ";/")
+#		Then, in the body (between wikitags):
+#		1. [^,;][^\/]* will not match a / unless it is NOT
+#			preceded by a , or ;
+#		|       OR:
+#		2. [^,;]*[^\/] will not match a , or ;, unless
+#			followed by a non-slash
+# So, body rule (1) will ensure "let's italicize ,/this,/ but not this
+#	but ,/this again,/ works.
+# italic is ,/ or ;/
+/[,;]\//  { gsub(/[,;]\/([^,;][^\/]*|[^,;]*[^\/]*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
+
+# BOLD is ,+ or ;+
+/[,;]\+/ { gsub(/[,;]\+([^,;][^\+]*|[^,;]*[^\+]*)[,;]\+/, "<b" add_id() ">&</b>"); gsub(/[,;]\+/,""); wikiprint(); }
+
+# underline is ,_ or ;_
+/[,;]_/  { gsub(/[,;]_([^,;][^_]*|[^,;]*[^_]*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
+
+# mono (code) type is ,. or ;.
+/[,;]\./  { gsub(/[,;]\.([^,;][^\.]*|[^,;]*[^\.]*)[,;]\./, "<span class=\"mono_preformat\"" add_id() ">&</span>"); gsub(/[,;]\./,""); wikiprint(); }
+
+# "classed" code is ," or ;"
+#	check for the "classed" text terminator first; this delimiter is
+#	,"<space>
+/[,;]\" / { gsub(/[,;]\" /,"</span>\\&nbsp;"); wikiprint(); } # end a class block
+
+# Now check for the start of the "classed" code block
+#	this delimiter is 
+#	,"CLASSNAME<space>
+/[,;]\"/  { 
+	#gsub(/[,;]\"([^,;][^" ]*|[^,; ]*[^" ]*) [,;]\"/, "<span class=\"&\"" add_id() ">"); 
+	#close_tags("list","classed"); 
+	#class_spantag_open = 1;  wikiprint(); 
+	gsub(/[,;]\"([^,;][^" ]*|[^,; ]*[^" ]*) /, "<span class=\"&\"" add_id() ">"); 
+	gsub(/[,;]\"/,""); 
+	wikiprint();
+}
+
+
+# any markup below this heading block cannot be included in a heading, since
+# the next at the end of the heading code will skip everything else.
+
 #headings
 /^[,;][1-6][ ]/ { headerLevel=substr($0,2,1); $0 = "<h" headerLevel id_string ">" substr($0, 4) "</h" headerLevel ">"; id_string=""; close_tags("","h"); wikiprint($0); next; }
 
@@ -120,30 +170,6 @@ function add_id() {
 			return id_string
 		}
 	}
-
-# 12/3/17 rework so most markup is prefixed with 
-#	1) a comma; or
-#	2) a semicolon (if linked to the table of contents for the page)
-# 12/17/17: made gsub less greedy for bold, italic, and underline by 
-#	using [^,;]* instead of .*
-
-
-# about the italic regex:
-#	[,;]\/ matches the first and last wikitag, ",/" (or ";/")
-#		Then, in the body (between wikitags):
-#		1. [^,;][^\/]* will not match a / unless it is NOT
-#			preceded by a , or ;
-#		|       OR:
-#		2. [^,;]*[^\/] will not match a , or ;, unless
-#			followed by a non-slash
-# So, body rule (1) will ensure "let's italicize ,/this,/ but not this
-#	but ,/this again,/ works.
-# italic is ,/ or ;/
-/[,;]\//  { gsub(/[,;]\/([^,;][^\/]*|[^,;]*[^\/]*)[,;]\//, "<i" add_id() ">&</i>"); gsub(/[,;]\//,""); wikiprint(); }
-# BOLD is ,. or ;.
-/[,;]\./ { gsub(/[,;]\.([^,;][^.]*|[^,;]*[^.]*)[,;]\./, "<b" add_id() ">&</b>"); gsub(/[,;]\./,""); wikiprint(); }
-# underline is ,_ or ;_
-/[,;]_/  { gsub(/[,;]_([^,;][^_]*|[^,;]*[^_]*)[,;]_/, "<u" add_id() ">&</u>"); gsub(/[,;]_/,""); wikiprint(); }
 
 function num_in_tag(sTag) {
 	nPos=match($0,sTag)
@@ -281,18 +307,26 @@ function tocprint()
 
 
 function close_tags(dont_close,caller) {
+	# dont_close: don't close whatever tag this is, close other tags.
+	# caller: ONLY PURPOSE IS FOR USE DEBUGGING!
 	# DEBUG print "close_tags(" dont_close"," caller")" >"/dev/stderr"
 	# close monospace
+#	if (class_spantag_open == 1) {
+#		print "close_tags(" dont_close"," caller") *****************" >"/dev/stderr"
+#		
+#		wikiprint("</span>")
+#		class_spantag_open = 0
+#	}
 	if (dont_close !~ "pre") {
 		# if not isn't "pre" we get here--
-		# so we get here for close_tags("list") or
+		# so we get here for close_tags("list") 
 		# a plain close_tags()
 		if (pre == 1) {
 			wikiprint("</pre>")
 			pre = 0
 		}
-		# We don't close lists because we started
-		# a "pre" block-- so the "not list"
+		# We don't close lists just because we started
+		# a "pre" block or a "span" block-- so the "not list"
 		# test goes here.
 		#
 		# if list is parsed this line print it
@@ -365,6 +399,7 @@ function parse_list(this, other) {
 }
 function wikiprint(s)
 {
-	# TO DEBUG:	print s > "/dev/stderr"
+	# TO DEBUG:	
+print s > "/dev/stderr"
 	wikibody=(wikibody  s "\n")
 }

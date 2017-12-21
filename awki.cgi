@@ -340,7 +340,7 @@ function edit(page, filename, revision,   cmd) {
 	wikiprint("<form action=\""scriptname"/&amp;page="page"\" method=\"GET\" style=\"display: inline;\"><input type=\"submit\" value=\"cancel\"></form>")
 	wikiprint( "<div class=\"FormKey\">\n")
 	wikiprint("<strong>WikiMarkup tags start with commas (,); use semicolon instead of comma to make link in contents.<br>")
-	wikiprint("Fonts:</strong>,/<em>italic</em>,/  ,.<strong>bold</strong>,.  ,_<u>underline</u>,_<br>")
+	wikiprint("Fonts:</strong>,/<em>italic</em>,/  ,+<strong>bold</strong>,+  ,_<u>underline</u>,_<br>")
 	wikiprint(" Start a line with a space to obtain preformatted lines. You can't use certain other tags (such as lists) in preformatted lines.<br>");
 	wikiprint("<strong>Format:</strong>,#= to indent; # is optional amount to indent.<br")
 	wikiprint(",- inserts a horizontal rule. A blank line starts a new paragraph.<br>")
